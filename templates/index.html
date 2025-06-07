@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering College Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+        }
+        h1 { text-align: center; color: #333; }
+        form { margin-bottom: 30px; }
+        label { display: block; margin-top: 15px; color: #555; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        button { margin-top: 20px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .results { margin-top: 30px; }
+        .college { background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 15px; margin-bottom: 15px; }
+        .college h3 { margin: 0 0 10px 0; color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Engineering College Predictor (2024)</h1>
+        <form method="get">
+            <label for="cutoff">Cutoff Marks:</label>
+            <input type="number" step="0.01" min="0" max="200" id="cutoff" name="cutoff" required value="{{ cutoff if cutoff is not none else '' }}">
+
+            <label for="category">Category:</label>
+            <select id="category" name="category" required>
+                <option value="OC" {% if category == 'OC' %}selected{% endif %}>OC</option>
+                <option value="BC" {% if category == 'BC' %}selected{% endif %}>BC</option>
+                <option value="MBC" {% if category == 'MBC' %}selected{% endif %}>MBC</option>
+                <option value="SC" {% if category == 'SC' %}selected{% endif %}>SC</option>
+                <option value="ST" {% if category == 'ST' %}selected{% endif %}>ST</option>
+            </select>
+
+            <label for="discipline">Discipline:</label>
+            <select id="discipline" name="discipline" required>
+                <option value="cs" {% if discipline == 'cs' %}selected{% endif %}>Computer & Allied Subjects</option>
+                <option value="noncs" {% if discipline == 'noncs' %}selected{% endif %}>Non-Computer Science</option>
+            </select>
+
+            <button type="submit">Find Colleges</button>
+        </form>
+
+        {% if colleges %}
+        <div class="results">
+            <h2>Eligible Colleges ({{ total }})</h2>
+            {% for college in colleges %}
+            <div class="college">
+                <h3>{{ college.College }}</h3>
+                <p><strong>Branch:</strong> {{ college.Branch }}</p>
+                <p><strong>Cut-off Marks:</strong> {{ college.Marks }}</p>
+                <p><strong>Rank:</strong> {{ college.Rank }}</p>
+                <p><strong>Category:</strong> {{ college.Category }}</p>
+                {% if college['Other Eligible Branches'] %}
+                <p><strong>Other Eligible Branches in this College:</strong> {{ college['Other Eligible Branches']|join(', ') }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div style="text-align:center; margin-top:20px;">
+                {% if page > 1 %}
+                    <a href="?cutoff={{ cutoff }}&category={{ category }}&discipline={{ discipline }}&page={{ page - 1 }}" class="btn">&laquo; Prev</a>
+                {% endif %}
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="?cutoff={{ cutoff }}&category={{ category }}&discipline={{ discipline }}&page={{ page + 1 }}" class="btn">Next &raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html> 
