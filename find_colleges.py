@@ -1,4 +1,5 @@
 import json
+import re
 
 def find_computer_science_colleges(json_file, target_marks=185, eligible_categories=['BC', 'OC']):
     try:
@@ -12,7 +13,7 @@ def find_computer_science_colleges(json_file, target_marks=185, eligible_categor
             'data analytics', 'big data', 'cloud', 'cyber', 'intelligence'
         ]
         
-        # Filter colleges with computer science branches, marks between 181-185, and eligible categories
+        # Filter colleges with computer science branches, marks <= target_marks, and eligible categories
         filtered_colleges = []
         for entry in data:
             try:
@@ -23,7 +24,7 @@ def find_computer_science_colleges(json_file, target_marks=185, eligible_categor
                 # Check if it's a computer science related branch and eligible category
                 is_cs_branch = any(keyword in branch for keyword in cs_keywords)
                 is_eligible_category = category in eligible_categories
-                is_in_range = 181 <= marks <= 185
+                is_in_range = marks <= target_marks
                 
                 if is_cs_branch and is_in_range and is_eligible_category:
                     filtered_colleges.append({
@@ -36,31 +37,45 @@ def find_computer_science_colleges(json_file, target_marks=185, eligible_categor
             except (ValueError, TypeError):
                 continue
         
-        # Sort by marks in ascending order
-        filtered_colleges.sort(key=lambda x: x['Marks'])
+        # Sort by student rank (ascending, best rank first)
+        def extract_numeric_rank(rank):
+            if not rank:
+                return float('inf')
+            match = re.match(r"(\d+)", str(rank).strip())
+            if match:
+                return float(match.group(1))
+            return float('inf')
+        filtered_colleges.sort(key=lambda x: extract_numeric_rank(x['Rank']))
         
-        # Get top 10 unique colleges
+        # Build a mapping from college name to all eligible branches
+        college_to_branches = {}
+        for entry in data:
+            try:
+                marks = float(entry.get('AGGR MARK', '0'))
+                branch = entry.get('Branch', '').lower()
+                category = entry.get('ALLOTTED CATEGORY', '')
+                is_eligible_category = category in eligible_categories
+                is_in_range = marks <= target_marks
+                if is_eligible_category and is_in_range:
+                    college_name = entry.get('College Details', '')
+                    if college_name not in college_to_branches:
+                        college_to_branches[college_name] = []
+                    college_to_branches[college_name].append(entry.get('Branch', ''))
+            except (ValueError, TypeError):
+                continue
+        
+        # Remove the top 10 unique colleges limit, return all eligible colleges ordered by rank
         seen_colleges = set()
-        top_colleges = []
-        
+        all_colleges = []
         for college in filtered_colleges:
             college_name = college['College']
-            if college_name not in seen_colleges and len(top_colleges) < 10:
+            if college_name not in seen_colleges:
                 seen_colleges.add(college_name)
-                top_colleges.append(college)
-        
-        # Print results
-        print(f"\nTop 10 Colleges for Computer Science/AI/Data Science (Cut-off Marks between 181-185):")
-        print(f"Eligible Categories: {', '.join(eligible_categories)}")
-        print("-" * 80)
-        for i, college in enumerate(top_colleges, 1):
-            print(f"\n{i}. College: {college['College']}")
-            print(f"   Branch: {college['Branch']}")
-            print(f"   Cut-off Marks: {college['Marks']}")
-            print(f"   Rank: {college['Rank']}")
-            print(f"   Category: {college['Category']}")
-            print(f"   Chance of Admission: {'Moderate' if college['Marks'] < 183 else 'Low'}")
-            print("-" * 80)
+                # Add other eligible branches for this college, ensure uniqueness
+                other_branches = list({b for b in college_to_branches.get(college_name, []) if b != college['Branch']})
+                college['Other Eligible Branches'] = other_branches
+                all_colleges.append(college)
+        return all_colleges
             
     except Exception as e:
         print(f"Error reading file: {str(e)}")
