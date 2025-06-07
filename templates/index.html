@@ -66,6 +66,8 @@
                 <p><strong>Cut-off Marks:</strong> {{ college.Marks }}</p>
                 <p><strong>Rank:</strong> {{ college.Rank }}</p>
                 <p><strong>Category:</strong> {{ college.Category }}</p>
+                {# <p><strong>Student Marks:</strong> {{ college['Student Marks'] }}</p> #}
+                <p><strong>Highest Mark in College:</strong> {{ college['Highest Mark'] }} ({{ college['Highest Mark Branch'] }})</p>
                 {% if college['Other Eligible Branches'] %}
                 <p><strong>Other Eligible Branches in this College:</strong> {{ college['Other Eligible Branches']|join(', ') }}</p>
                 {% endif %}

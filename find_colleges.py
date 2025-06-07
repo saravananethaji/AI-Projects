@@ -64,6 +64,18 @@ def find_computer_science_colleges(json_file, target_marks=185, eligible_categor
             except (ValueError, TypeError):
                 continue
         
+        # Find the highest mark and branch for each college
+        college_highest = {}
+        for entry in data:
+            try:
+                marks = float(entry.get('AGGR MARK', '0'))
+                branch = entry.get('Branch', '')
+                college_name = entry.get('College Details', '')
+                if college_name not in college_highest or marks > college_highest[college_name][0]:
+                    college_highest[college_name] = (marks, branch)
+            except (ValueError, TypeError):
+                continue
+        
         # Remove the top 10 unique colleges limit, return all eligible colleges ordered by rank
         seen_colleges = set()
         all_colleges = []
@@ -72,8 +84,16 @@ def find_computer_science_colleges(json_file, target_marks=185, eligible_categor
             if college_name not in seen_colleges:
                 seen_colleges.add(college_name)
                 # Add other eligible branches for this college, ensure uniqueness
-                other_branches = list({b for b in college_to_branches.get(college_name, []) if b != college['Branch']})
-                college['Other Eligible Branches'] = other_branches
+                other_branches = list({b for b in college_to_branches.get(college_name, []) if b != college['Branch'] and b and b != '#N/A'})
+                college['Other Eligible Branches'] = sorted(other_branches)
+                # Add student marks and highest mark/branch info
+                college['Student Marks'] = target_marks
+                if college_name in college_highest:
+                    college['Highest Mark'] = college_highest[college_name][0]
+                    college['Highest Mark Branch'] = college_highest[college_name][1]
+                else:
+                    college['Highest Mark'] = None
+                    college['Highest Mark Branch'] = None
                 all_colleges.append(college)
         return all_colleges
             
